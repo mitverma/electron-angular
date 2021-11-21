@@ -1,0 +1,87 @@
+<div class="home-page-wrapper">
+    <div class="container">
+        <!-- user detail -->
+        <div class="user-detail">
+            <div class="row">
+                <div class="col-3">
+                    <div class="user-basic-info">
+                        <div class="profile-img">
+                            <mat-icon>person</mat-icon>
+                        </div>
+                        <h4>{{userData?.name}}</h4>
+                        <h5>{{userData?.designation}}</h5>
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="attendance-detail-wrapper">
+                        <div class="working-hour">
+                            <span class="time">05h 30m</span>
+                            <span class="info">Total Work Time</span>
+                        </div>
+                        <div class="break-hour">
+                            <span class="time">10m</span>
+                            <span class="info">Total Break Time</span>
+                        </div>
+                        <div class="handle-attendance">
+                            <button class="button-primary" mat-raised-button (click)="startDay()">Start</button>
+                            <button class="button-primary" mat-raised-button (click)="breakIn()">Break In</button>
+                            <button class="button-primary" mat-raised-button (click)="breakOut()">Break Out</button>
+                            <button class="button-primary" mat-raised-button (click)="endDay();">End</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- show calendar details -->
+        <div class="attendance-info">
+            <!-- filters -->
+            <div class="filters">
+                <form [formGroup]="calenderForm">
+                    <div class="row">
+                        <div class="col">
+                            <mat-form-field appearance="">
+                                <mat-label>Month</mat-label>
+                                <mat-select formControlName="month">
+                                    <mat-option *ngFor="let month of monthList; let i = index" [value]="i">
+                                        {{month}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col">
+                            <mat-form-field appearance="">
+                                    <mat-label>Year</mat-label>
+                                    <mat-select formControlName="year">
+                                        <mat-option *ngFor="let year of yearList; let i = index" [value]="year">
+                                            {{year}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                        </div>
+                        <div class="col">
+                            <button class="button-primary" mat-raised-button (click)="filterCalendar(calenderForm.value)">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- show calendar -->
+            <div class="calendar-wrapper">
+                <div class="calendar-heading">
+                    <div class="day-name">Sun</div>
+                    <div class="day-name">Mon</div>
+                    <div class="day-name">Tue</div>
+                    <div class="day-name">Wed</div>
+                    <div class="day-name">Thur</div>
+                    <div class="day-name">Fri</div>
+                    <div class="day-name">Sat</div>
+                </div>
+                <div class="calendar-data">
+                    <div *ngFor="let day of calendarData">
+                        {{day.dateNo}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

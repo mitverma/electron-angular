@@ -1,0 +1,21 @@
+.employee-form-wrapper {
+    .mat-form-field {
+        width: 250px;
+    }
+
+    .form-field {
+        width: 250px;
+        margin: 0 auto 15px;
+
+        .icon {
+            margin-right: 15px;
+            vertical-align: -4px;
+        }
+    }
+
+    
+    ::ng-deep .mat-form-field-appearance-fill .mat-form-field-flex {
+        padding: .75em .75em 0 0;
+        background-color: transparent;
+    }
+}

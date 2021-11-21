@@ -1,0 +1,43 @@
+<div class="employee-form-wrapper">
+    <h2 class="text-center mb-4 text-uppercase">{{modalData?.modalType}} Employee</h2>
+    <form [formGroup]="employeeForm">
+        <div class="form-field">
+            <mat-form-field >
+                <mat-label>Name</mat-label>
+                <input matInput type="text" formControlName="name">
+                <mat-icon matPrefix class="icon">person</mat-icon>
+            </mat-form-field>
+        </div>
+        <div class="form-field">
+            <mat-form-field >
+                <mat-label>Employee Id</mat-label>
+                <input matInput type="text" formControlName="employeeId">
+                <mat-icon matPrefix class="icon">assignment_ind</mat-icon>
+            </mat-form-field>
+        </div>
+        <div class="form-field">
+            <mat-form-field >
+                <mat-label>Designation</mat-label>
+                <input matInput type="text" formControlName="designation">
+                <mat-icon matPrefix class="icon">assignment_ind</mat-icon>
+            </mat-form-field>
+        </div>
+        <div class="form-field">
+            <mat-form-field >
+                <mat-label>Email Id</mat-label>
+                <input matInput type="text" formControlName="email">
+                <mat-icon matPrefix class="icon">email</mat-icon>
+            </mat-form-field>
+        </div>
+        <div class="form-field">
+            <mat-form-field >
+                <mat-label>Contact</mat-label>
+                <input matInput type="text" formControlName="contactNo">
+                <mat-icon matPrefix class="icon">phone</mat-icon>
+            </mat-form-field>
+        </div>
+        <div class="text-center">
+            <button type="submit" mat-raised-button class="button-primary" [disabled]="employeeForm.invalid" (click)="submitEmployeeData(employeeForm)">{{modalData.modalType == 'add' ? 'Create': 'Update'}}</button>
+        </div> 
+    </form>
+</div>

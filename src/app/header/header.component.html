@@ -1,0 +1,18 @@
+<header>
+    <div class="container">
+        <div class="clearfix">
+            <div class="float-start">
+                <h1>
+                    <img src="" alt="Logo">
+                </h1>
+                <span routerLink="/home">Home</span>
+                <span routerLink="/dashboard">Dashboard</span>
+                <span routerLink="/login">login</span>
+            </div>
+            <div class="float-end" *ngIf="userData?.userId">
+                <span>Testing</span>
+                <span class="ml-5" *ngIf="userData && userData.userId" (click)="logout();">Logout</span>
+            </div>
+        </div>
+    </div>
+</header>
