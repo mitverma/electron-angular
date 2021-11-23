@@ -17,6 +17,7 @@ export class HomeComponent implements OnInit {
   currentMonthYear = moment().format('MM-YYYY');
   currentDate = moment().format('DD-MM-YYYY');
   userData: any;
+  attendanceUserData: any;
   constructor(private firestore: AngularFirestore, private commonService: CommonService) {
     this.calenderForm = new FormGroup({
       month: new FormControl(moment().month()),
@@ -30,6 +31,8 @@ export class HomeComponent implements OnInit {
     console.log(this.userData,'userData');
     this.showCalendar(this.calenderForm.value.month, this.calenderForm.value.year);
     console.log(this.firestore, 'firestore');
+
+    this.getAttendanceListByUser();
   }
 
   showCalendar(month, year){
@@ -309,4 +312,110 @@ export class HomeComponent implements OnInit {
   //       },
   //     }
   //   }
+
+
+
+  //new collection testing-attendance
+
+  // get attendance list by user and current month year
+  getAttendanceListByUser(){
+    let userKeyByMonthYear = this.userData.userId+'-'+this.currentMonthYear;
+    this.firestore.collection('testing-attendance').get().subscribe(res => {
+      this.attendanceUserData = res.docs.map(item => item.data()).find(itemList => itemList['key'] == userKeyByMonthYear);
+      console.log(this.attendanceUserData, 'attendance user data');
+      if(this.attendanceUserData){
+
+      }else {
+
+      }
+    })
+  }
+
+  // add attendance 
+  async addTodayAttendanceNew(attendanceObj){
+    // check if user data is present by current month
+    let userAttendanceCurrentMonth = await this.checkUserAttendCurrentMonth();
+    if(userAttendanceCurrentMonth && userAttendanceCurrentMonth['key']){
+      let isDayPresent = await this.checkUserAttendCurrentDate(userAttendanceCurrentMonth);
+      if(isDayPresent){
+        userAttendanceCurrentMonth.attendanceData[this.currentDate].push(attendanceObj);
+      }else {
+        let dateObjArray = {
+          [this.currentDate]: [attendanceObj] // adding object to array
+        }
+        userAttendanceCurrentMonth.attendanceData.push(dateObjArray);
+      }
+    }else {
+      // if user is adding attendance for the first time for current month and current date
+      let addNewUserData = {
+        userId: this.userData.userId,
+        createdAt: new Date().valueOf(),
+        key: this.userData.userId+'-'+this.currentMonthYear,
+        attendanceData: [
+          {
+            [this.currentDate]: [attendanceObj] // adding object to array
+          }
+        ]
+      }
+
+      // add fresh data for userId and current month, create new object with attendanceData array 
+      this.firestore.collection('testing-attendance').doc(addNewUserData.key).set(addNewUserData);
+
+    }
+  }
+
+
+  // start a day attendance
+  async startDayNew(){
+    let attendanceData = {
+      startTime: moment().format('hh:mm:ss'),
+      currentTime: new Date().valueOf(),
+      endTime: '',
+      breakTime: '',
+      totalWorkTime: '',
+      breakInTime: '',
+      breakOutTime: '',
+      type: 'start'
+    }
+    this.addTodayAttendance(attendanceData).then(res => {
+      let localData = {
+        startTime: moment().format('hh:mm:ss'),
+        currentTime: new Date().valueOf(),
+        endTime: '',
+        breakInTime: '',
+        breakOutTime: '',
+      }
+      sessionStorage.setItem('attendanceData',JSON.stringify(localData));
+    });
+  }
+
+
+  // current user attendance with current month
+  checkUserAttendCurrentMonth(): Promise<any> {
+    let userKeyByMonthYear = this.userData.userId+'-'+this.currentMonthYear;
+    let promise = new Promise((resolve, reject) => {
+      this.firestore.collection('testing-attendance').get().subscribe(res => {
+        let isUserPresent = res.docs.map(list => list.data()).find(item => item['key'] == userKeyByMonthYear);
+        resolve(isUserPresent);
+      })
+    });
+    return promise;
+  }
+
+
+  // check if current date is present in user attendance obj or array
+  checkUserAttendCurrentDate(attendanceUserObj): Promise<any>{
+    let promise = new Promise((resolve,reject) => {
+      if(attendanceUserObj && attendanceUserObj.attendanceData && attendanceUserObj.attendanceData.length){
+        let isDatePresent = false;
+        for(let list of attendanceUserObj.attendanceData){
+          isDatePresent = list.hasOwnProperty(this.currentDate);
+          if(isDatePresent) break;
+        }
+
+        resolve(isDatePresent);
+      }
+    });
+    return promise;
+  }
 }
