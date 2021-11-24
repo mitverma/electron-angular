@@ -336,14 +336,21 @@ export class HomeComponent implements OnInit {
     // check if user data is present by current month
     let userAttendanceCurrentMonth = await this.checkUserAttendCurrentMonth();
     if(userAttendanceCurrentMonth && userAttendanceCurrentMonth['key']){
+      let index = userAttendanceCurrentMonth.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
       let isDayPresent = await this.checkUserAttendCurrentDate(userAttendanceCurrentMonth);
       if(isDayPresent){
-        userAttendanceCurrentMonth.attendanceData[this.currentDate].push(attendanceObj);
+        userAttendanceCurrentMonth.attendanceData[index][this.currentDate].push(attendanceObj);
+        this.firestore.collection('testing-attendance').doc(userAttendanceCurrentMonth['key']).update(userAttendanceCurrentMonth);
+        this.attendanceUserData = userAttendanceCurrentMonth;
+        console.log(this.attendanceUserData, 'userattendance is user present');
       }else {
         let dateObjArray = {
           [this.currentDate]: [attendanceObj] // adding object to array
         }
         userAttendanceCurrentMonth.attendanceData.push(dateObjArray);
+        this.firestore.collection('testing-attendance').doc(userAttendanceCurrentMonth['key']).update(userAttendanceCurrentMonth);
+        this.attendanceUserData = userAttendanceCurrentMonth;
+        console.log(this.attendanceUserData, 'userattendance if date is not present add date');
       }
     }else {
       // if user is adding attendance for the first time for current month and current date
@@ -359,7 +366,9 @@ export class HomeComponent implements OnInit {
       }
 
       // add fresh data for userId and current month, create new object with attendanceData array 
-      this.firestore.collection('testing-attendance').doc(addNewUserData.key).set(addNewUserData);
+      this.firestore.collection('testing-attendance').doc(addNewUserData.key).set(addNewUserData).then(res => {
+        this.getAttendanceListByUser();
+      });
 
     }
   }
@@ -377,7 +386,7 @@ export class HomeComponent implements OnInit {
       breakOutTime: '',
       type: 'start'
     }
-    this.addTodayAttendance(attendanceData).then(res => {
+    this.addTodayAttendanceNew(attendanceData).then(res => {
       let localData = {
         startTime: moment().format('hh:mm:ss'),
         currentTime: new Date().valueOf(),
@@ -386,6 +395,70 @@ export class HomeComponent implements OnInit {
         breakOutTime: '',
       }
       sessionStorage.setItem('attendanceData',JSON.stringify(localData));
+    });
+  }
+
+  // end day attendance
+  async endDayNew(){
+    let getTodayAttendanceData = JSON.parse(sessionStorage.getItem('attendanceData'));
+    let attendanceData = {
+      startTime: getTodayAttendanceData.startTime,
+      currentTime: new Date().valueOf(),
+      endTime: moment().format('hh:mm:ss'),
+      breakTime: getTodayAttendanceData.breakTime || '',
+      totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
+      breakInTime: '',
+      breakOutTime: '',
+      type: 'end'
+    }
+    let calculateData = await this.calculateEndTimeNew();
+    if(calculateData && calculateData.data.type == 'break-out'){
+      attendanceData.totalWorkTime = calculateData.calculatedTotalDifference;
+    }else if(calculateData && calculateData.data.type == "break-in"){
+      attendanceData.breakTime = calculateData.calculatedTotalDifference;
+    }
+    this.addTodayAttendanceNew(attendanceData);
+  }
+
+  // break in
+  async breakInNew(){
+    let getTodayAttendanceData = JSON.parse(sessionStorage.getItem('attendanceData'));
+    let attendanceData = {
+      startTime: getTodayAttendanceData.startTime,
+      currentTime: new Date().valueOf(),
+      endTime: '',
+      breakTime: getTodayAttendanceData.breakTime || '',
+      totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
+      breakInTime: moment().format('hh:mm:ss'),
+      breakOutTime: '',
+      type: 'break-in'
+    }
+    let calculateWorkTime = await this.calculateWorkTimeNew();
+    attendanceData.totalWorkTime = calculateWorkTime;
+    this.addTodayAttendanceNew(attendanceData).then(res => {
+      getTodayAttendanceData.totalWorkTime = calculateWorkTime;
+      sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
+    });
+  }
+
+  // break out
+  async breakOutNew(){
+    let getTodayAttendanceData = JSON.parse(sessionStorage.getItem('attendanceData'));
+    let attendanceData = {
+      startTime: getTodayAttendanceData.startTime,
+      currentTime: new Date().valueOf(),
+      endTime: '',
+      breakTime: getTodayAttendanceData.breakTime || '',
+      totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
+      breakInTime: '',
+      breakOutTime: moment().format('hh:mm:ss'),
+      type: 'break-out'
+    }
+    let calculateBreak = await this.calculateBreakTimeNew();
+    attendanceData.breakTime = calculateBreak;
+    this.addTodayAttendanceNew(attendanceData).then(res => {
+      getTodayAttendanceData.breakTime = calculateBreak;
+      sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
     });
   }
 
@@ -415,6 +488,90 @@ export class HomeComponent implements OnInit {
 
         resolve(isDatePresent);
       }
+    });
+    return promise;
+  }
+
+  // calculate end time
+  calculateEndTimeNew(): Promise<any>{
+    let promise = new Promise((resolve, reject) => {
+      // find index of current date from attendance list
+      let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+      let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
+      let getTime;
+      if(attendanceListCurrentDate && attendanceListCurrentDate.length) {
+        let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
+        let endTime = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+        let totalDifference;
+
+        // if last data input was break-out
+        if(getLastData && getLastData.type == 'break-out'){
+          getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+          totalDifference = endTime.diff(getTime, 'minutes');
+          totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference : totalDifference;
+          // if last data input was break-out end
+        }else if(getLastData && getLastData.type == 'break-in'){
+          getTime = moment(getLastData.breakInTime, 'hh:mm:ss');
+          totalDifference = endTime.diff(getTime, 'minutes');
+          totalDifference = getLastData.breakTime != '' ? getLastData.breakTime + totalDifference : totalDifference;
+        }
+
+        let endData = {
+          calculatedTotalDifference: totalDifference,
+          data: getLastData
+        }
+        resolve(endData);
+      }
+    });
+    return promise;
+  }
+
+  // calculate work time
+  calculateWorkTimeNew(): Promise<any>{
+    let promise = new Promise((resolve, reject) => {
+      let getTime;
+      // find index of current date from attendance list
+      let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+      let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
+      if(attendanceListCurrentDate && attendanceListCurrentDate.length){
+        let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
+        // if there is first break then get last data and current data
+        if(attendanceListCurrentDate.length == 1){
+          getTime = moment(getLastData.startTime, 'hh:mm:ss');
+        }
+        // if there is first break then get last data and current data end
+        // and if there is more then one data then get last break-out-time
+        if(attendanceListCurrentDate.length > 1) {
+          getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+        }
+        // and if there is more then one data then get last break-out-time end
+        // let workTime = moment(getLastData.totalWorkTime, 'hh:mm:ss');
+        let breakIn = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+        // let totalDifference = breakStart.diff(breakEnd, 'minutes');
+        let totalDifference = breakIn.diff(getTime, 'minutes');
+        totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference: totalDifference;
+        resolve(totalDifference);
+      }
+    });
+    return promise;
+  }
+
+  // calculate break time
+  calculateBreakTimeNew(): Promise<any>{
+    let promise = new Promise((resolve, reject) => {
+     // find index of current date from attendance list
+     let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+     let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
+
+    if(attendanceListCurrentDate && attendanceListCurrentDate.length){
+      let getLastBreakIn = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
+      let breakStart = moment(getLastBreakIn.breakInTime, 'hh:mm:ss');
+      let breakEnd = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+      // let totalDifference = breakStart.diff(breakEnd, 'minutes');
+      let totalDifference = breakEnd.diff(breakStart, 'minutes');
+      totalDifference = getLastBreakIn.breakTime != '' ? getLastBreakIn.breakTime + totalDifference: totalDifference;
+      resolve(totalDifference);
+     }
     });
     return promise;
   }
