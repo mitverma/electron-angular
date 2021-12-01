@@ -109,11 +109,24 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 20px;
-    div {
+    > div {
         height: auto;
         padding: 15px 0;
         border-bottom: 2px solid lighten($color-black, 75%);
         color: lighten($color-black, 40%);
         font-size: 18px;
+    }
+
+    .date-details {
+        span {
+            display: block;
+            color: $color-white;
+            &.total-work-time {
+                background-color: green;
+            }
+            &.total-break-time {
+                background-color: red;
+            }
+        }
     }
 }

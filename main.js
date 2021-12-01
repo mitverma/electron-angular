@@ -1,8 +1,8 @@
-const {app, BrowserWindow, screen, powerMonitor} = require('electron');
+const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
     const url = require("url");
     const path = require("path");
 
-
+    var showPrompt = true;
     let screenSizeInfo;
     // get width and height of window
     app.whenReady().then(() => {
@@ -20,7 +20,7 @@ const {app, BrowserWindow, screen, powerMonitor} = require('electron');
         
         webPreferences: {
           nodeIntegration: true,
-          devTools: false
+          devTools: true
         },
         
       })
@@ -35,17 +35,67 @@ const {app, BrowserWindow, screen, powerMonitor} = require('electron');
       // Open the DevTools.
       mainWindow.webContents.openDevTools()
 
-      mainWindow.on('closed', function () {
-        mainWindow = null
+      // var hasConfirmedClose = false;
+      // mainWindow.on('closed', function (e) {
+      //   // mainWindow = null;
+      //   if(!hasConfirmedClose){
+      //     debugger;
+      //     e.preventDefault();
+      //     var prompt = dialog.showMessageBox(mainWindow, {
+      //       message: 'Are you sure you want to quit bro',
+      //       type: 'warning',
+      //       buttons: ['Yes', 'No'],
+      //       title: 'Confirm',
+      //     })
+      //   }
+      // });
+
+      mainWindow.on('close', function(e) {
+        if(showPrompt){
+          e.preventDefault();
+          var prompt = dialog.showMessageBox(mainWindow, {
+            message: 'Are you sure you want to quit',
+            type: 'warning',
+            buttons: ['Yes', 'No'],
+            title: 'Confirm',
+          })
+          console.log(prompt, 'prompt');
+          prompt.then(promptResponse => {
+            console.log(promptResponse, 'response then');
+            if(promptResponse.response == 0){
+              showPrompt = false;
+              mainWindow.close();
+            }
+          })
+        }
       });
+
       mainWindow.setMenu(null);
     }
 
     // app.on('ready', createWindow);
 
-    app.on('window-all-closed', function () {
-      if (process.platform !== 'darwin') app.quit()
-    })
+    // app.on('window-all-closed', function (e) {
+    //   // if (process.platform !== 'darwin') app.quit()
+    //   var prompt = dialog.showMessageBox(mainWindow, {
+    //     message: 'Are you sure you want to quit brrro',
+    //     type: 'warning',
+    //     buttons: ['Yes', 'No'],
+    //     title: 'Confirm',
+    //   })
+    //   e.preventDefault();
+    // })
+
+    // app.on('before-quit', function (e) {
+    //   // if (process.platform !== 'darwin') app.quit()
+    //   var prompt = dialog.showMessageBox(mainWindow, {
+    //     message: 'Are you sure you want to quit brrro',
+    //     type: 'warning',
+    //     buttons: ['Yes', 'No'],
+    //     title: 'Confirm',
+    //   })
+    //   e.preventDefault();
+    // })
 
     app.on('activate', function () {
       if (mainWindow === null) createWindow()

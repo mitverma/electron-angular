@@ -18,6 +18,7 @@ export class HomeComponent implements OnInit {
   currentDate = moment().format('DD-MM-YYYY');
   userData: any;
   attendanceUserData: any;
+  todayAttendance: any;
   constructor(private firestore: AngularFirestore, private commonService: CommonService) {
     this.calenderForm = new FormGroup({
       month: new FormControl(moment().month()),
@@ -30,9 +31,23 @@ export class HomeComponent implements OnInit {
     this.userData = this.commonService.getUserDetailData() || JSON.parse(sessionStorage.getItem('userData'));
     console.log(this.userData,'userData');
     this.showCalendar(this.calenderForm.value.month, this.calenderForm.value.year);
+    this.calculateTodayAttendance();
     console.log(this.firestore, 'firestore');
 
-    this.getAttendanceListByUser();
+    this.getAttendanceListByUser(this.currentMonthYear).then(currentMonthAttendanceArray => {
+      if(currentMonthAttendanceArray){
+        this.calendarData = this.calendarData.map(item => {
+          let getByDate = currentMonthAttendanceArray.find(list => list.dateNo == item.dateNo);
+          if(getByDate) {
+            item.totalWorkTime = getByDate.totalWorkTime;
+            item.breakTime = getByDate.breakTime;
+            item.date = getByDate.date
+          };
+          return item;
+        })
+      }
+      console.log(this.calendarData, 'calendar data');
+    });
   }
 
   showCalendar(month, year){
@@ -74,7 +89,21 @@ export class HomeComponent implements OnInit {
   filterCalendar(formValue){
     let setMonthValue = (formValue.month+1).toString();
     this.calendarData = [];
-    this.showCalendar(setMonthValue, formValue.year)
+    this.showCalendar(setMonthValue, formValue.year);
+    let setFilteredMonthYear = setMonthValue+'-'+formValue.year;
+    this.getAttendanceListByUser(setFilteredMonthYear).then(currentMonthAttendanceArray => {
+      if(currentMonthAttendanceArray){
+        this.calendarData = this.calendarData.map(item => {
+          let getByDate = currentMonthAttendanceArray.find(list => list.dateNo == item.dateNo);
+          if(getByDate) {
+            item.totalWorkTime = getByDate.totalWorkTime;
+            item.breakTime = getByDate.breakTime;
+            item.date = getByDate.date
+          };
+          return item;
+        })
+      }
+    });
   }
 
 
@@ -318,17 +347,29 @@ export class HomeComponent implements OnInit {
   //new collection testing-attendance
 
   // get attendance list by user and current month year
-  getAttendanceListByUser(){
-    let userKeyByMonthYear = this.userData.userId+'-'+this.currentMonthYear;
-    this.firestore.collection('testing-attendance').get().subscribe(res => {
-      this.attendanceUserData = res.docs.map(item => item.data()).find(itemList => itemList['key'] == userKeyByMonthYear);
-      console.log(this.attendanceUserData, 'attendance user data');
-      if(this.attendanceUserData){
-
-      }else {
-
-      }
-    })
+  getAttendanceListByUser(currentMonthYear) : Promise<any>{
+    let promise = new Promise((resolve, reject) => {
+      let userKeyByMonthYear = this.userData.userId+'-'+currentMonthYear;
+      this.firestore.collection('testing-attendance').get().subscribe(res => {
+        this.attendanceUserData = res.docs.map(item => item.data()).find(itemList => itemList['key'] == userKeyByMonthYear);
+        console.log(this.attendanceUserData, 'attendance user data');
+        if(this.attendanceUserData){
+          let getLastDataOfDate = this.attendanceUserData.attendanceData.map(list => {
+            let getDateObjKey = Object.keys(list)[0];
+            let getDateArrayData = list[getDateObjKey]
+            let obj = {
+              dateNo: moment(getDateObjKey, 'DD-MM-YYYY').date(),
+              date: getDateObjKey,
+              ...getDateArrayData[getDateArrayData.length - 1]
+            };
+            return obj;
+          });
+          console.log(getLastDataOfDate, 'get last date of data');
+          resolve(getLastDataOfDate);
+        }
+      })
+    });
+    return promise;
   }
 
   // add attendance 
@@ -367,7 +408,7 @@ export class HomeComponent implements OnInit {
 
       // add fresh data for userId and current month, create new object with attendanceData array 
       this.firestore.collection('testing-attendance').doc(addNewUserData.key).set(addNewUserData).then(res => {
-        this.getAttendanceListByUser();
+        this.getAttendanceListByUser(this.currentMonthYear);
       });
 
     }
@@ -386,6 +427,11 @@ export class HomeComponent implements OnInit {
       breakOutTime: '',
       type: 'start'
     }
+    let startDayData = await this.calculateStartTimeNew();
+    if(startDayData){
+      attendanceData.breakTime = startDayData.breakTime;
+      attendanceData.totalWorkTime = startDayData.totalWorkTime
+    }
     this.addTodayAttendanceNew(attendanceData).then(res => {
       let localData = {
         startTime: moment().format('hh:mm:ss'),
@@ -393,6 +439,8 @@ export class HomeComponent implements OnInit {
         endTime: '',
         breakInTime: '',
         breakOutTime: '',
+        totalWorkTime: attendanceData.totalWorkTime,
+        breakTime: attendanceData.breakTime,
       }
       sessionStorage.setItem('attendanceData',JSON.stringify(localData));
     });
@@ -542,7 +590,14 @@ export class HomeComponent implements OnInit {
         // if there is first break then get last data and current data end
         // and if there is more then one data then get last break-out-time
         if(attendanceListCurrentDate.length > 1) {
-          getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+          // if last data is starttime bcoz user ended or might technically issue ended
+          if(getLastData && getLastData.type == 'start'){
+            getTime = moment(getLastData.startTime, 'hh:mm:ss');
+          }
+          // if last data is break-out-time
+          else if(getLastData && getLastData.type == 'break-out'){
+            getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+          }
         }
         // and if there is more then one data then get last break-out-time end
         // let workTime = moment(getLastData.totalWorkTime, 'hh:mm:ss');
@@ -574,5 +629,39 @@ export class HomeComponent implements OnInit {
      }
     });
     return promise;
+  }
+
+
+  //calculate start time if user has been logged out techical issue or manually ended session
+  calculateStartTimeNew(): Promise<any>{
+    let promise = new Promise((resolve, reject) => {
+      let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+      if(index != -1) {
+        let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
+        if(attendanceListCurrentDate && attendanceListCurrentDate.length){
+          let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
+          resolve(getLastData);
+        }
+      }else {
+        resolve(null);
+      }
+    });
+    return promise;
+  }
+
+  // calculate todays attendance data
+  calculateTodayAttendance(){
+    let userKeyByMonthYear = this.userData.userId+'-'+this.currentMonthYear;
+    this.firestore.collection('testing-attendance').get().subscribe(res => {
+      let getAttendanceList =  res.docs.map(item => item.data()).find(list => list['key'] == userKeyByMonthYear);
+      if(getAttendanceList &&  getAttendanceList['attendanceData']){
+        let index = getAttendanceList['attendanceData'].findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+        if(index != -1) {
+          let getLastData = getAttendanceList['attendanceData'][index][this.currentDate];
+          this.todayAttendance = getLastData[getLastData.length - 1];
+          sessionStorage.setItem('attendanceData', JSON.stringify(this.todayAttendance));
+        }
+      }
+    })
   }
 }

@@ -78,7 +78,17 @@
                 </div>
                 <div class="calendar-data">
                     <div *ngFor="let day of calendarData">
-                        {{day.dateNo}}
+                        <div class="date-info clearfix">
+                            <div class="float-start">
+                                {{day.dateNo}}
+                            </div>
+                            <div class="float-end">
+                                <div class="date-details">
+                                    <span class="total-work-time" *ngIf="day?.totalWorkTime">{{day?.totalWorkTime}}</span>
+                                    <span class="total-break-time" *ngIf="day?.breakTime">{{day?.breakTime}}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
