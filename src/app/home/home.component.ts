@@ -19,6 +19,11 @@ export class HomeComponent implements OnInit {
   userData: any;
   attendanceUserData: any;
   todayAttendance: any;
+  viewStartBtn: boolean = true;
+  viewBreakInBtn: boolean = false;
+  viewBreakoutBtn: boolean = false;
+  viewEndBtn: boolean = false;
+
   constructor(private firestore: AngularFirestore, private commonService: CommonService) {
     this.calenderForm = new FormGroup({
       month: new FormControl(moment().month()),
@@ -443,6 +448,11 @@ export class HomeComponent implements OnInit {
         breakTime: attendanceData.breakTime,
       }
       sessionStorage.setItem('attendanceData',JSON.stringify(localData));
+      
+
+      //button views
+      this.viewStartBtn = false;
+      this.viewBreakInBtn = true;
     });
   }
 
@@ -486,6 +496,11 @@ export class HomeComponent implements OnInit {
     this.addTodayAttendanceNew(attendanceData).then(res => {
       getTodayAttendanceData.totalWorkTime = calculateWorkTime;
       sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
+
+      
+      //button views
+      this.viewBreakInBtn = false;
+      this.viewBreakoutBtn = true;
     });
   }
 
@@ -507,6 +522,11 @@ export class HomeComponent implements OnInit {
     this.addTodayAttendanceNew(attendanceData).then(res => {
       getTodayAttendanceData.breakTime = calculateBreak;
       sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
+
+      //button views
+      this.viewBreakInBtn = true;
+      this.viewBreakoutBtn = false;
+      
     });
   }
 
@@ -635,16 +655,21 @@ export class HomeComponent implements OnInit {
   //calculate start time if user has been logged out techical issue or manually ended session
   calculateStartTimeNew(): Promise<any>{
     let promise = new Promise((resolve, reject) => {
-      let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
-      if(index != -1) {
-        let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
-        if(attendanceListCurrentDate && attendanceListCurrentDate.length){
-          let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
-          resolve(getLastData);
+      if(this.attendanceUserData && this.attendanceUserData.attendanceData && this.attendanceUserData.attendanceData.length){
+        let index = this.attendanceUserData.attendanceData.findIndex(arrayObj => Object.keys(arrayObj)[0] == this.currentDate);
+        if(index != -1) {
+          let attendanceListCurrentDate = this.attendanceUserData.attendanceData[index][this.currentDate];
+          if(attendanceListCurrentDate && attendanceListCurrentDate.length){
+            let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
+            resolve(getLastData);
+          }
+        }else {
+          resolve(null);
         }
       }else {
         resolve(null);
       }
+      
     });
     return promise;
   }

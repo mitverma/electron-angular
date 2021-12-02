@@ -20,7 +20,7 @@ const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
         
         webPreferences: {
           nodeIntegration: true,
-          devTools: true
+          devTools: false
         },
         
       })

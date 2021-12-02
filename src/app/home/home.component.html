@@ -23,10 +23,11 @@
                             <span class="info">Total Break Time</span>
                         </div>
                         <div class="handle-attendance">
-                            <button class="button-primary" mat-raised-button (click)="startDayNew()">Start</button>
-                            <button class="button-primary" mat-raised-button (click)="breakInNew()">Break In</button>
-                            <button class="button-primary" mat-raised-button (click)="breakOutNew()">Break Out</button>
-                            <button class="button-primary" mat-raised-button (click)="endDayNew();">End</button>
+                            <button class="button-primary" *ngIf="viewStartBtn" mat-raised-button (click)="startDayNew()">Start</button>
+                            <button class="button-primary" *ngIf="viewBreakInBtn" mat-raised-button (click)="breakInNew()">Break In</button>
+                            <button class="button-primary" *ngIf="viewBreakoutBtn" mat-raised-button (click)="breakOutNew()">Break Out</button>
+                            <button class="button-primary" *ngIf="viewEndBtn" mat-raised-button (click)="endDayNew();">End</button>
+                            <!-- <button class="button-primary" mat-raised-button (click)="endDayNew();">End</button> -->
                         </div>
                     </div>
                 </div>
