@@ -23,6 +23,7 @@ export class HomeComponent implements OnInit {
   viewBreakInBtn: boolean = false;
   viewBreakoutBtn: boolean = false;
   viewEndBtn: boolean = false;
+  isAdmin: boolean = false;
 
   constructor(private firestore: AngularFirestore, private commonService: CommonService) {
     this.calenderForm = new FormGroup({
@@ -52,6 +53,11 @@ export class HomeComponent implements OnInit {
         })
       }
       console.log(this.calendarData, 'calendar data');
+
+      // check if user is admin
+      if(this.userData.type == "A"){
+        this.isAdmin = true;
+      }
     });
   }
 
@@ -446,6 +452,7 @@ export class HomeComponent implements OnInit {
         breakOutTime: '',
         totalWorkTime: attendanceData.totalWorkTime,
         breakTime: attendanceData.breakTime,
+        type: 'start'
       }
       sessionStorage.setItem('attendanceData',JSON.stringify(localData));
       
@@ -495,6 +502,7 @@ export class HomeComponent implements OnInit {
     attendanceData.totalWorkTime = calculateWorkTime;
     this.addTodayAttendanceNew(attendanceData).then(res => {
       getTodayAttendanceData.totalWorkTime = calculateWorkTime;
+      getTodayAttendanceData.type = "break-in";
       sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
 
       
@@ -521,6 +529,7 @@ export class HomeComponent implements OnInit {
     attendanceData.breakTime = calculateBreak;
     this.addTodayAttendanceNew(attendanceData).then(res => {
       getTodayAttendanceData.breakTime = calculateBreak;
+      getTodayAttendanceData.type = "break-out";
       sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
 
       //button views
@@ -685,6 +694,29 @@ export class HomeComponent implements OnInit {
           let getLastData = getAttendanceList['attendanceData'][index][this.currentDate];
           this.todayAttendance = getLastData[getLastData.length - 1];
           sessionStorage.setItem('attendanceData', JSON.stringify(this.todayAttendance));
+
+          // set button values 
+          this.viewStartBtn = false;
+          this.viewBreakInBtn = false;
+          this.viewBreakoutBtn = false;
+          this.viewEndBtn = false;
+          if(this.todayAttendance && this.todayAttendance.type == "start" || this.todayAttendance.type == "break-out") {
+            this.viewBreakInBtn = true;
+            this.viewBreakoutBtn = false;
+          }else if(this.todayAttendance && this.todayAttendance.type == "break-in"){
+            this.viewBreakInBtn = false;
+            this.viewBreakoutBtn = true;
+          }else {
+            this.viewStartBtn = true;
+          }
+          // set button values end
+          // calculate hours and minutes total worked
+          this.todayAttendance.hoursWorked = Math.floor(this.todayAttendance.totalWorkTime / 60);
+          this.todayAttendance.minutesWorked = this.todayAttendance.totalWorkTime % 60;
+
+          //calculate hours and minutes total break
+          this.todayAttendance.hoursBreak = Math.floor(this.todayAttendance.breakTime / 60);
+          this.todayAttendance.minutesBreak = this.todayAttendance.breakTime % 60;
         }
       }
     })

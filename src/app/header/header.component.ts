@@ -16,7 +16,11 @@ export class HeaderComponent implements OnInit {
     this.commonService.userData.asObservable().subscribe(userNewVal => {
       this.userData = userNewVal;
       console.log(this.userData, 'user data');
-    })
+    });
+
+    if(sessionStorage.getItem('userData')){
+      this.userData = JSON.parse(sessionStorage.getItem('userData'));
+    }
   }
 
   logout(){

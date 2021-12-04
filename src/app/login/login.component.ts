@@ -26,7 +26,7 @@ export class LoginComponent implements OnInit {
     this.firestore.collection('users').get().subscribe((res) => {
       let userList =  res.docs.map(list =>  list.data());
       if(userList && userList.length){
-        let isUserPresent =  userList.find((item: any) => item.employeeId == formData.value.employeeId);
+        let isUserPresent =  userList.find((item: any) => (item.employeeId == formData.value.employeeId && item.password == formData.value.password));
         if(isUserPresent){
           sessionStorage.setItem('userData', JSON.stringify(isUserPresent));
           this.commonService.setUserDetailData(isUserPresent);
@@ -35,6 +35,8 @@ export class LoginComponent implements OnInit {
           }else {
             this.router.navigate(['home'])
           }
+        }else {
+          this.commonService.toasterMessage('Please enter valid Employee Id & Password');
         }
       }
     })

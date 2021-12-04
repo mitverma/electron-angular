@@ -5,6 +5,39 @@
     background-color: $color-bg;
 }
 
+.breadcrumb {
+    padding: 2rem 0 0;
+    margin: 0 0 1rem;
+    .mat-icon {
+        width: 35px;
+        height: 35px;
+        margin-right: 15px;
+        border-radius: 100%;
+        background-color: $color-primary;
+        color: $color-white;
+        line-height: 35px;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    h2 {
+        margin: 0;
+        letter-spacing: 0.5px;
+        span {
+            cursor: pointer;
+            &:hover {
+                color: $color-primary
+            }
+            &:last-child { 
+                cursor: auto;
+                &:hover {
+                    color: $color-black;
+                }
+            }
+        }
+    }
+}
+
 .user-detail {
     padding: 25px 0;
 }

@@ -1,5 +1,10 @@
 <div class="home-page-wrapper">
     <div class="container">
+
+        <div class="breadcrumb" *ngIf="isAdmin">
+            <h2 class="font-muli"><mat-icon>list</mat-icon> <span routerLink="/dashboard">Dashboard</span> / <span>User Attendance Info</span></h2>
+        </div>
+
         <!-- user detail -->
         <div class="user-detail">
             <div class="row">
@@ -15,11 +20,17 @@
                 <div class="col-9">
                     <div class="attendance-detail-wrapper">
                         <div class="working-hour">
-                            <span class="time">05h 30m</span>
+                            <span class="time">
+                                <span class="hours">{{todayAttendance?.hoursWorked}}h </span>
+                                <span class="minutes">: {{todayAttendance?.minutesWorked}}m</span>
+                            </span>
                             <span class="info">Total Work Time</span>
                         </div>
                         <div class="break-hour">
-                            <span class="time">10m</span>
+                            <span class="time">
+                                <span class="hours">{{todayAttendance?.hoursBreak}}h </span>
+                                <span class="minutes">: {{todayAttendance?.minutesBreak}}m</span>
+                            </span>
                             <span class="info">Total Break Time</span>
                         </div>
                         <div class="handle-attendance">
