@@ -26,11 +26,11 @@ export class LoginComponent implements OnInit {
     this.firestore.collection('users').get().subscribe((res) => {
       let userList =  res.docs.map(list =>  list.data());
       if(userList && userList.length){
-        let isUserPresent =  userList.find((item: any) => (item.employeeId == formData.value.employeeId && item.password == formData.value.password));
+        let isUserPresent: any =  userList.find((item: any) => (item.employeeId == formData.value.employeeId && item.password == formData.value.password));
         if(isUserPresent){
           sessionStorage.setItem('userData', JSON.stringify(isUserPresent));
           this.commonService.setUserDetailData(isUserPresent);
-          if(isUserPresent['type'] == 'A'){
+          if(isUserPresent.userType == 'A'){
             this.router.navigate(['dashboard']);
           }else {
             this.router.navigate(['home'])

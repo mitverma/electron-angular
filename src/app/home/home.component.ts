@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { CommonService } from '../shared/common.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -25,7 +26,7 @@ export class HomeComponent implements OnInit {
   viewEndBtn: boolean = false;
   isAdmin: boolean = false;
 
-  constructor(private firestore: AngularFirestore, private commonService: CommonService) {
+  constructor(private firestore: AngularFirestore, private commonService: CommonService, private router: Router) {
     this.calenderForm = new FormGroup({
       month: new FormControl(moment().month()),
       year: new FormControl(moment().year().toString())
@@ -53,12 +54,47 @@ export class HomeComponent implements OnInit {
         })
       }
       console.log(this.calendarData, 'calendar data');
-
-      // check if user is admin
-      if(this.userData.type == "A"){
-        this.isAdmin = true;
-      }
     });
+
+
+    // if user is getting logout then call data attendance method accordingly
+    this.commonService.userLogout.asObservable().subscribe(res => {
+      if(res) {
+        let getTodayAttendanceData = JSON.parse(sessionStorage.getItem('attendanceData'));
+        if(getTodayAttendanceData && getTodayAttendanceData.type == 'start' || getTodayAttendanceData.type == 'break-out'){
+          this.endDayNew().then(() => {
+            sessionStorage.removeItem('userData');
+            sessionStorage.removeItem('attendanceData');
+            this.commonService.setUserDetailData(null);
+            this.router.navigate(['login']);
+            this.commonService.isUserLogout(false);
+          });
+        }else if(getTodayAttendanceData && getTodayAttendanceData.type == 'break-in'){
+          this.breakOutNew().then(response => {
+            this.endDayNew().then(() => {
+              sessionStorage.removeItem('userData');
+              sessionStorage.removeItem('attendanceData');
+              this.commonService.setUserDetailData(null);
+              this.router.navigate(['login']);
+              this.commonService.isUserLogout(false);
+            });
+          });
+        }else {
+          sessionStorage.removeItem('userData');
+          sessionStorage.removeItem('attendanceData');
+          this.commonService.setUserDetailData(null);
+          this.router.navigate(['login']);
+          this.commonService.isUserLogout(false);
+        }
+      }      
+    })
+    // if user is getting logout then call data attendance method accordingly end
+
+    // check if user is admin
+    let getUserLoggedInData: any = JSON.parse(sessionStorage.getItem('userData'));
+    if(getUserLoggedInData.userType == "A"){
+      this.isAdmin = true;
+    }
   }
 
   showCalendar(month, year){

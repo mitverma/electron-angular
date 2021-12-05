@@ -9,6 +9,7 @@ export class CommonService {
 
   userDetailData: any;
   userData = new BehaviorSubject('');
+  userLogout = new BehaviorSubject(false);
   constructor(private snackBar: MatSnackBar) { }
 
   getUserDetailData(){
@@ -18,6 +19,10 @@ export class CommonService {
   setUserDetailData(data){
     this.userDetailData = data;
     this.userData.next(data);
+  }
+
+  isUserLogout(value: boolean){
+    this.userLogout.next(value);
   }
 
   toasterMessage(message){

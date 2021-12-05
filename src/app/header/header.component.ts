@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../shared/common.service';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-header',
@@ -9,7 +11,7 @@ import { Router } from '@angular/router';
 })
 export class HeaderComponent implements OnInit {
   userData: any;
-  constructor(private commonService: CommonService, private router: Router) { }
+  constructor(private commonService: CommonService, private router: Router, private dailog: MatDialog) { }
 
   ngOnInit(): void {
 
@@ -24,10 +26,28 @@ export class HeaderComponent implements OnInit {
   }
 
   logout(){
-    sessionStorage.removeItem('userData');
-    sessionStorage.removeItem('attendanceData');
-    this.commonService.setUserDetailData(null);
-    this.router.navigate(['login']);
+
+    let dailogReference = this.dailog.open(ConfirmationModalComponent, {
+      width: '500px',
+      data: {
+        heading: 'Are you sure you want to logout your attendance will be also get logged out'
+      }
+    });
+
+    dailogReference.afterClosed().subscribe(modalResponse => {
+      if(modalResponse == "yes"){
+        console.log(modalResponse, 'modal response');
+        if(this.userData.userType == "E"){
+          this.commonService.isUserLogout(true);
+        }else {
+          sessionStorage.removeItem('userData');
+          sessionStorage.removeItem('attendanceData');
+          this.commonService.setUserDetailData(null);
+          this.router.navigate(['login']);
+        }
+
+      }
+    })
   }
 
 }

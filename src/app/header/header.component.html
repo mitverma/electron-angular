@@ -5,13 +5,15 @@
                 <h1>
                     <img src="" alt="Logo">
                 </h1>
-                <span routerLink="/home">Home</span>
+                <!-- <span routerLink="/home">Home</span>
                 <span routerLink="/dashboard">Dashboard</span>
-                <span routerLink="/login">login</span>
+                <span routerLink="/login">login</span> -->
             </div>
-            <div class="float-end" *ngIf="userData?.userId">
-                <span>Testing</span>
-                <span class="ml-5" *ngIf="userData && userData.userId" (click)="logout();">Logout</span>
+            <div class="float-end user-info" *ngIf="userData?.userId">
+                <span>{{userData?.name}}</span>
+                <span (click)="logout();">
+                    <mat-icon>power_settings_new</mat-icon>
+                </span>
             </div>
         </div>
     </div>

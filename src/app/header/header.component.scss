@@ -9,3 +9,14 @@ header {
         margin: 0;
     }
 }
+
+.user-info {
+    span {
+        display: inline-block;
+        font-size: 16px;
+        vertical-align: middle;
+        &:first-child {
+            margin: 0 15px 0 0;
+        }
+    }
+}

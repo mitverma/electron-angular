@@ -17,7 +17,7 @@
                         <h5>{{userData?.designation}}</h5>
                     </div>
                 </div>
-                <div class="col-9">
+                <div class="col-9" *ngIf="!isAdmin">
                     <div class="attendance-detail-wrapper">
                         <div class="working-hour">
                             <span class="time">
