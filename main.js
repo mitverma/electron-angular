@@ -1,4 +1,4 @@
-const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
+const {app, BrowserWindow, screen, powerMonitor, dialog, ipcMain} = require('electron');
     const url = require("url");
     const path = require("path");
 
@@ -20,7 +20,10 @@ const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
         
         webPreferences: {
           nodeIntegration: true,
-          devTools: false
+          devTools: false,
+          enableRemoteModule: true,
+          nodeIntegration: true,
+          contextIsolation: false
         },
         
       })
@@ -33,7 +36,16 @@ const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
         })
       );
       // Open the DevTools.
-      mainWindow.webContents.openDevTools()
+      mainWindow.webContents.openDevTools();
+
+      // create a custome event
+      // create a custome event end
+
+      // create a custom element
+      // var trigger = document.createElement('span')
+      // trigger.setAttribute('id', 'bantai');
+      // console.log(document.getElementById('bantai'), 'render');
+      // create a custom element end
 
       // var hasConfirmedClose = false;
       // mainWindow.on('closed', function (e) {
@@ -106,4 +118,21 @@ const {app, BrowserWindow, screen, powerMonitor, dialog} = require('electron');
     console.log(state, 'current state');
     let idleTime = powerMonitor.getSystemIdleTime();
     console.log(idleTime, 'idle time');
+
+    powerMonitor.on('suspend', () => {
+      console.log('GOING TO SLEEP!');
+      mainWindow.send('custom-suspend');
+    });
+
+    powerMonitor.on('lock-screen', () => {
+      console.log('GOING TO LOCK!');
+      mainWindow.send('custom-suspend');
+      mainWindow.webContents.send('lockscreen', 'lockscreen value');
+      // document.getElementById('bantai').click();
+    });
+    powerMonitor.on('unlock-screen', () => {
+      console.log('GOING TO UNLOCK!');
+      mainWindow.send('custom-suspend');
+      mainWindow.webContents.send('unlockscreen', 'Hey');
+    });
     // get idle time end

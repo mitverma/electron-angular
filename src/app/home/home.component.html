@@ -21,19 +21,20 @@
                     <div class="attendance-detail-wrapper">
                         <div class="working-hour">
                             <span class="time">
-                                <span class="hours">{{todayAttendance?.hoursWorked}}h </span>
-                                <span class="minutes">: {{todayAttendance?.minutesWorked}}m</span>
+                                <span class="hours">{{todayAttendance?.totalWorkTime | attendancetime: 'hours'}}h </span>
+                                <span class="minutes">: {{todayAttendance?.totalWorkTime | attendancetime: 'minutes'}}m</span>
                             </span>
                             <span class="info">Total Work Time</span>
                         </div>
                         <div class="break-hour">
                             <span class="time">
-                                <span class="hours">{{todayAttendance?.hoursBreak}}h </span>
-                                <span class="minutes">: {{todayAttendance?.minutesBreak}}m</span>
+                                <span class="hours">{{todayAttendance?.breakTime | attendancetime: 'hours'}}h </span>
+                                <span class="minutes">: {{todayAttendance?.breakTime | attendancetime: 'minutes'}}m</span>
                             </span>
                             <span class="info">Total Break Time</span>
                         </div>
                         <div class="handle-attendance">
+                            <button class="button-primary cached" mat-fab (click)="calculateTodayAttendance();"><mat-icon>cached</mat-icon></button>
                             <button class="button-primary" *ngIf="viewStartBtn" mat-raised-button (click)="startDayNew()">Start</button>
                             <button class="button-primary" *ngIf="viewBreakInBtn" mat-raised-button (click)="breakInNew()">Break In</button>
                             <button class="button-primary" *ngIf="viewBreakoutBtn" mat-raised-button (click)="breakOutNew()">Break Out</button>
@@ -96,8 +97,14 @@
                             </div>
                             <div class="float-end">
                                 <div class="date-details">
-                                    <span class="total-work-time" *ngIf="day?.totalWorkTime">{{day?.totalWorkTime}}</span>
-                                    <span class="total-break-time" *ngIf="day?.breakTime">{{day?.breakTime}}</span>
+                                    <span class="total-work-time" *ngIf="day?.totalWorkTime">
+                                        <span>Work Time </span>
+                                        <span>{{day.totalWorkTime | attendancetime:'hours'}} h: {{day.totalWorkTime | attendancetime:'minutes'}} m</span>
+                                    </span>
+                                    <span class="total-break-time" *ngIf="day?.breakTime">
+                                        <span>Break Time </span>
+                                        <span>{{day.breakTime | attendancetime:'hours'}} h : {{day.breakTime | attendancetime:'minutes'}} m</span>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -107,3 +114,4 @@
         </div>
     </div>
 </div>
+<div id="bantai"></div>

@@ -18,6 +18,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
+import { PipeModule } from './pipe.module';
 
 
 
@@ -43,6 +44,7 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
     MatPaginatorModule,
     MatSnackBarModule,
     ReactiveFormsModule,
+    PipeModule
   ],
   exports: [
     MatTableModule,
@@ -63,6 +65,7 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
     MatPaginatorModule,
     MatSnackBarModule,
     ReactiveFormsModule,
+    PipeModule
   ]
 })
 export class SharedModule { }

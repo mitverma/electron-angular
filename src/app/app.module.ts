@@ -10,6 +10,7 @@ import { HeaderComponent } from './header/header.component';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { AngularFireModule } from "@angular/fire";
 import { AngularFireDatabaseModule } from "@angular/fire/database";
+import { NgxElectronModule } from 'ngx-electron';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDI-N2D6iWnEFmtnlJLHWmWZQt34_lGzvQ",
@@ -34,6 +35,7 @@ const firebaseConfig = {
     NoopAnimationsModule,
     AngularFireModule.initializeApp(firebaseConfig),
     AngularFireDatabaseModule,
+    NgxElectronModule,
     SharedModule
   ],
   providers: [],

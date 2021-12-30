@@ -4,6 +4,9 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { CommonService } from '../shared/common.service';
 import { Router } from '@angular/router';
+// import { IpcRenderer } from 'electron';
+import { ElectronService } from 'ngx-electron';
+// import * as Electron from 'electron';
 
 @Component({
   selector: 'app-home',
@@ -25,12 +28,58 @@ export class HomeComponent implements OnInit {
   viewBreakoutBtn: boolean = false;
   viewEndBtn: boolean = false;
   isAdmin: boolean = false;
+  ipc: any;
 
-  constructor(private firestore: AngularFirestore, private commonService: CommonService, private router: Router) {
+  constructor(private firestore: AngularFirestore, private commonService: CommonService, private router: Router, private electronService: ElectronService) {
     this.calenderForm = new FormGroup({
       month: new FormControl(moment().month()),
       year: new FormControl(moment().year().toString())
     })
+
+
+    // if ((<any>window).require) {
+    //   try {
+    //     this.ipc = (<any>window).require('electron').ipcRenderer;
+    //     this.ipc.on('lockscreen', (event) => {
+    //       console.log(event);
+    //     })
+    //   } catch (e) {
+    //     throw e;
+    //   }
+    // } else {
+    //   console.warn('App not running inside Electron!');
+    //   this.ipc = (<any>window).require('electron').ipcRenderer;
+    //     this.ipc.on('lockscreen', (event) => {
+    //       console.log(event);
+    //     })
+    // }
+
+    var triggerElement = document.getElementById('bantai');
+    if(triggerElement){
+      triggerElement.addEventListener('click', () => {
+        console.log('bro triggered'); 
+      })
+    }
+
+    console.log(this.electronService, 'ES');
+    if(this.electronService.isElectronApp){
+      this.electronService.ipcRenderer.on('lockscreen', (event, arg) => {
+        console.log(event, 'lock screen event', arg);
+        let getTodayAttendanceData =  JSON.parse(sessionStorage.getItem('attendanceData'));
+        if(!this.isAdmin && getTodayAttendanceData && getTodayAttendanceData.type == "start" || getTodayAttendanceData.type == "break-out"){
+          this.breakInNew();
+        }
+      });
+  
+      this.electronService.ipcRenderer.on('unlockscreen', (event, arg) => {
+        console.log(event, 'unlock screen event', arg);
+        let getTodayAttendanceData =  JSON.parse(sessionStorage.getItem('attendanceData'));
+        if(!this.isAdmin && getTodayAttendanceData && getTodayAttendanceData.type == "break-in"){
+          this.breakOutNew();
+        }
+      })
+    }
+    
   }
 
   ngOnInit(): void {
@@ -61,7 +110,7 @@ export class HomeComponent implements OnInit {
     this.commonService.userLogout.asObservable().subscribe(res => {
       if(res) {
         let getTodayAttendanceData = JSON.parse(sessionStorage.getItem('attendanceData'));
-        if(getTodayAttendanceData && getTodayAttendanceData.type == 'start' || getTodayAttendanceData.type == 'break-out'){
+        if((getTodayAttendanceData && getTodayAttendanceData.type == 'start') || (getTodayAttendanceData && getTodayAttendanceData.type == 'break-out')){
           this.endDayNew().then(() => {
             sessionStorage.removeItem('userData');
             sessionStorage.removeItem('attendanceData');
@@ -180,7 +229,7 @@ export class HomeComponent implements OnInit {
   // create current date and add attendance
   async addTodayAttendance(attendanceObj){
     // check if current month is created
-    let currentTime = moment().format('hh:mm:ss');
+    let currentTime = moment().format('HH:mm:ss');
     console.log(this.currentMonthYear, 'month', this.currentDate, 'date', typeof(this.currentDate));
     let isMonthPresentLength = await this.checkFireBaseKeyPresent(this.currentMonthYear, this.currentDate);
     console.log(isMonthPresentLength, 'is month present');
@@ -203,7 +252,7 @@ export class HomeComponent implements OnInit {
 
   startDay(){
     let attendanceData = {
-      startTime: moment().format('hh:mm:ss'),
+      startTime: moment().format('HH:mm:ss'),
       currentTime: new Date().valueOf(),
       endTime: '',
       breakTime: '',
@@ -214,7 +263,7 @@ export class HomeComponent implements OnInit {
     }
     this.addTodayAttendance(attendanceData).then(res => {
       let localData = {
-        startTime: moment().format('hh:mm:ss'),
+        startTime: moment().format('HH:mm:ss'),
         currentTime: new Date().valueOf(),
         endTime: '',
         breakInTime: '',
@@ -229,7 +278,7 @@ export class HomeComponent implements OnInit {
     let attendanceData = {
       startTime: getTodayAttendanceData.startTime,
       currentTime: new Date().valueOf(),
-      endTime: moment().format('hh:mm:ss'),
+      endTime: moment().format('HH:mm:ss'),
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
       breakInTime: '',
@@ -252,7 +301,7 @@ export class HomeComponent implements OnInit {
       endTime: '',
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
-      breakInTime: moment().format('hh:mm:ss'),
+      breakInTime: moment().format('HH:mm:ss'),
       breakOutTime: '',
       type: 'break-in'
     }
@@ -273,7 +322,7 @@ export class HomeComponent implements OnInit {
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
       breakInTime: '',
-      breakOutTime: moment().format('hh:mm:ss'),
+      breakOutTime: moment().format('HH:mm:ss'),
       type: 'break-out'
     }
     let calculateBreak = await this.calculateBreakTime();
@@ -292,8 +341,8 @@ export class HomeComponent implements OnInit {
           let attendanceList = response.docs.map(list => list.data());
           if(attendanceList && attendanceList.length){
             let getLastBreakIn = attendanceList[attendanceList.length - 1];
-            let breakStart = moment(getLastBreakIn.breakInTime, 'hh:mm:ss');
-            let breakEnd = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+            let breakStart = moment(getLastBreakIn.breakInTime, 'HH:mm:ss');
+            let breakEnd = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
             // let totalDifference = breakStart.diff(breakEnd, 'minutes');
             let totalDifference = breakEnd.diff(breakStart, 'minutes');
             totalDifference = getLastBreakIn.breakTime != '' ? getLastBreakIn.breakTime + totalDifference: totalDifference;
@@ -316,16 +365,16 @@ export class HomeComponent implements OnInit {
             let getLastData = attendanceList[attendanceList.length - 1];
             // if there is first break then get last data and current data
             if(attendanceList.length == 1){
-              getTime = moment(getLastData.startTime, 'hh:mm:ss');
+              getTime = moment(getLastData.startTime, 'HH:mm:ss');
             }
             // if there is first break then get last data and current data end
             // and if there is more then one data then get last break-out-time
             if(attendanceList.length > 1) {
-              getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+              getTime = moment(getLastData.breakOutTime, 'HH:mm:ss');
             }
             // and if there is more then one data then get last break-out-time end
-            // let workTime = moment(getLastData.totalWorkTime, 'hh:mm:ss');
-            let breakIn = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+            // let workTime = moment(getLastData.totalWorkTime, 'HH:mm:ss');
+            let breakIn = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
             // let totalDifference = breakStart.diff(breakEnd, 'minutes');
             let totalDifference = breakIn.diff(getTime, 'minutes');
             totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference: totalDifference;
@@ -347,17 +396,17 @@ export class HomeComponent implements OnInit {
           let getTime;
           if(attendance && attendance.length) {
             let getLastData = attendance[attendance.length - 1];
-            let endTime = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+            let endTime = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
             let totalDifference;
 
             // if last data input was break-out
             if(getLastData && getLastData.type == 'break-out'){
-              getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+              getTime = moment(getLastData.breakOutTime, 'HH:mm:ss');
               totalDifference = endTime.diff(getTime, 'minutes');
               totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference : totalDifference;
               // if last data input was break-out end
             }else if(getLastData && getLastData.type == 'break-in'){
-              getTime = moment(getLastData.breakInTime, 'hh:mm:ss');
+              getTime = moment(getLastData.breakInTime, 'HH:mm:ss');
               totalDifference = endTime.diff(getTime, 'minutes');
               totalDifference = getLastData.breakTime != '' ? getLastData.breakTime + totalDifference : totalDifference;
             }
@@ -465,7 +514,7 @@ export class HomeComponent implements OnInit {
   // start a day attendance
   async startDayNew(){
     let attendanceData = {
-      startTime: moment().format('hh:mm:ss'),
+      startTime: moment().format('HH:mm:ss'),
       currentTime: new Date().valueOf(),
       endTime: '',
       breakTime: '',
@@ -481,7 +530,7 @@ export class HomeComponent implements OnInit {
     }
     this.addTodayAttendanceNew(attendanceData).then(res => {
       let localData = {
-        startTime: moment().format('hh:mm:ss'),
+        startTime: moment().format('HH:mm:ss'),
         currentTime: new Date().valueOf(),
         endTime: '',
         breakInTime: '',
@@ -505,7 +554,7 @@ export class HomeComponent implements OnInit {
     let attendanceData = {
       startTime: getTodayAttendanceData.startTime,
       currentTime: new Date().valueOf(),
-      endTime: moment().format('hh:mm:ss'),
+      endTime: moment().format('HH:mm:ss'),
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
       breakInTime: '',
@@ -530,7 +579,7 @@ export class HomeComponent implements OnInit {
       endTime: '',
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
-      breakInTime: moment().format('hh:mm:ss'),
+      breakInTime: moment().format('HH:mm:ss'),
       breakOutTime: '',
       type: 'break-in'
     }
@@ -558,7 +607,7 @@ export class HomeComponent implements OnInit {
       breakTime: getTodayAttendanceData.breakTime || '',
       totalWorkTime: getTodayAttendanceData.totalWorkTime || '',
       breakInTime: '',
-      breakOutTime: moment().format('hh:mm:ss'),
+      breakOutTime: moment().format('HH:mm:ss'),
       type: 'break-out'
     }
     let calculateBreak = await this.calculateBreakTimeNew();
@@ -614,17 +663,17 @@ export class HomeComponent implements OnInit {
       let getTime;
       if(attendanceListCurrentDate && attendanceListCurrentDate.length) {
         let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
-        let endTime = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+        let endTime = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
         let totalDifference;
 
         // if last data input was break-out
         if(getLastData && getLastData.type == 'break-out'){
-          getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+          getTime = moment(getLastData.breakOutTime, 'HH:mm:ss');
           totalDifference = endTime.diff(getTime, 'minutes');
           totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference : totalDifference;
           // if last data input was break-out end
         }else if(getLastData && getLastData.type == 'break-in'){
-          getTime = moment(getLastData.breakInTime, 'hh:mm:ss');
+          getTime = moment(getLastData.breakInTime, 'HH:mm:ss');
           totalDifference = endTime.diff(getTime, 'minutes');
           totalDifference = getLastData.breakTime != '' ? getLastData.breakTime + totalDifference : totalDifference;
         }
@@ -650,23 +699,23 @@ export class HomeComponent implements OnInit {
         let getLastData = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
         // if there is first break then get last data and current data
         if(attendanceListCurrentDate.length == 1){
-          getTime = moment(getLastData.startTime, 'hh:mm:ss');
+          getTime = moment(getLastData.startTime, 'HH:mm:ss');
         }
         // if there is first break then get last data and current data end
         // and if there is more then one data then get last break-out-time
         if(attendanceListCurrentDate.length > 1) {
           // if last data is starttime bcoz user ended or might technically issue ended
           if(getLastData && getLastData.type == 'start'){
-            getTime = moment(getLastData.startTime, 'hh:mm:ss');
+            getTime = moment(getLastData.startTime, 'HH:mm:ss');
           }
           // if last data is break-out-time
           else if(getLastData && getLastData.type == 'break-out'){
-            getTime = moment(getLastData.breakOutTime, 'hh:mm:ss');
+            getTime = moment(getLastData.breakOutTime, 'HH:mm:ss');
           }
         }
         // and if there is more then one data then get last break-out-time end
-        // let workTime = moment(getLastData.totalWorkTime, 'hh:mm:ss');
-        let breakIn = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+        // let workTime = moment(getLastData.totalWorkTime, 'HH:mm:ss');
+        let breakIn = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
         // let totalDifference = breakStart.diff(breakEnd, 'minutes');
         let totalDifference = breakIn.diff(getTime, 'minutes');
         totalDifference = getLastData.totalWorkTime != '' ? getLastData.totalWorkTime + totalDifference: totalDifference;
@@ -685,8 +734,8 @@ export class HomeComponent implements OnInit {
 
     if(attendanceListCurrentDate && attendanceListCurrentDate.length){
       let getLastBreakIn = attendanceListCurrentDate[attendanceListCurrentDate.length - 1];
-      let breakStart = moment(getLastBreakIn.breakInTime, 'hh:mm:ss');
-      let breakEnd = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+      let breakStart = moment(getLastBreakIn.breakInTime, 'HH:mm:ss');
+      let breakEnd = moment(moment().format('HH:mm:ss'), 'HH:mm:ss');
       // let totalDifference = breakStart.diff(breakEnd, 'minutes');
       let totalDifference = breakEnd.diff(breakStart, 'minutes');
       totalDifference = getLastBreakIn.breakTime != '' ? getLastBreakIn.breakTime + totalDifference: totalDifference;
@@ -746,13 +795,6 @@ export class HomeComponent implements OnInit {
             this.viewStartBtn = true;
           }
           // set button values end
-          // calculate hours and minutes total worked
-          this.todayAttendance.hoursWorked = Math.floor(this.todayAttendance.totalWorkTime / 60);
-          this.todayAttendance.minutesWorked = this.todayAttendance.totalWorkTime % 60;
-
-          //calculate hours and minutes total break
-          this.todayAttendance.hoursBreak = Math.floor(this.todayAttendance.breakTime / 60);
-          this.todayAttendance.minutesBreak = this.todayAttendance.breakTime % 60;
         }
       }
     })
