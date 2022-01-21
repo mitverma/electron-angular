@@ -172,8 +172,13 @@
         position: absolute;
         top: -100px;
         right: 15px;
-        background-color: $color-secondary;
+        box-shadow: none;
+        background-color: transparent;
+        color: $color-secondary;
+        .mat-button-wrapper {
+            padding: 0;
+            line-height: inherit;
+            .mat-icon { font-weight: bold; }
+        }
     }
 }
-
-#bantai { display: none; }

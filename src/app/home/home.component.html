@@ -51,7 +51,7 @@
             <div class="filters">
                 <form [formGroup]="calenderForm">
                     <div class="row">
-                        <div class="col">
+                        <div class="col-2">
                             <mat-form-field appearance="">
                                 <mat-label>Month</mat-label>
                                 <mat-select formControlName="month">
@@ -61,7 +61,7 @@
                                 </mat-select>
                             </mat-form-field>
                         </div>
-                        <div class="col">
+                        <div class="col-2">
                             <mat-form-field appearance="">
                                     <mat-label>Year</mat-label>
                                     <mat-select formControlName="year">
@@ -71,7 +71,7 @@
                                     </mat-select>
                                 </mat-form-field>
                         </div>
-                        <div class="col">
+                        <div class="col-2">
                             <button class="button-primary" mat-raised-button (click)="filterCalendar(calenderForm.value)">Submit</button>
                         </div>
                     </div>

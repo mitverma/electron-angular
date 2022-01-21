@@ -10,7 +10,9 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "start:electron": "ng build --base-href ./ && electron .",
-    "package_electron": "electron-packager ."
+    "electron": "ng build --base-href ./ && tsc --p electron && electron electron/dist/main.js",
+    "package_electron": "electron-packager .",
+    "package_electron_32": "electron-packager . --platform=win32 --arch=ia32"
   },
   "private": true,
   "dependencies": {
@@ -33,7 +35,7 @@
     "node-pre-gyp": "^0.17.0",
     "popper.js": "^1.16.1",
     "rxjs": "~6.6.0",
-    "tslib": "^2.0.0",
+    "tslib": "^2.3.1",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

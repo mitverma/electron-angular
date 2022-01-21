@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -11,6 +11,7 @@ import { ConfirmationModalComponent } from './confirmation-modal/confirmation-mo
 import { AngularFireModule } from "@angular/fire";
 import { AngularFireDatabaseModule } from "@angular/fire/database";
 import { NgxElectronModule } from 'ngx-electron';
+import { GlobalerrorhandlerService } from './shared/globalerrorhandler.service';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDI-N2D6iWnEFmtnlJLHWmWZQt34_lGzvQ",
@@ -38,7 +39,7 @@ const firebaseConfig = {
     NgxElectronModule,
     SharedModule
   ],
-  providers: [],
+  providers: [{provide: ErrorHandler, useClass: GlobalerrorhandlerService}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

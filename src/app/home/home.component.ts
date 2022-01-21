@@ -86,7 +86,7 @@ export class HomeComponent implements OnInit {
     this.yearList = this.getPreviousYears(3);
     this.userData = this.commonService.getUserDetailData() || JSON.parse(sessionStorage.getItem('userData'));
     console.log(this.userData,'userData');
-    this.showCalendar(this.calenderForm.value.month, this.calenderForm.value.year);
+    this.showCalendar((this.calenderForm.value.month+1), this.calenderForm.value.year);
     this.calculateTodayAttendance();
     console.log(this.firestore, 'firestore');
 
@@ -186,7 +186,7 @@ export class HomeComponent implements OnInit {
     let setMonthValue = (formValue.month+1).toString();
     this.calendarData = [];
     this.showCalendar(setMonthValue, formValue.year);
-    let setFilteredMonthYear = setMonthValue+'-'+formValue.year;
+    let setFilteredMonthYear = (setMonthValue < 9 ? '0'+setMonthValue: setMonthValue)+'-'+formValue.year;
     this.getAttendanceListByUser(setFilteredMonthYear).then(currentMonthAttendanceArray => {
       if(currentMonthAttendanceArray){
         this.calendarData = this.calendarData.map(item => {
@@ -614,6 +614,7 @@ export class HomeComponent implements OnInit {
     attendanceData.breakTime = calculateBreak;
     this.addTodayAttendanceNew(attendanceData).then(res => {
       getTodayAttendanceData.breakTime = calculateBreak;
+      getTodayAttendanceData.breakOutTime = attendanceData.breakOutTime;
       getTodayAttendanceData.type = "break-out";
       sessionStorage.setItem('attendanceData', JSON.stringify(getTodayAttendanceData));
 
